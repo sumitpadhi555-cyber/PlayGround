@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#080b12" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Vice Harbor - an original open-world 3D driving and action sandbox for phone, tablet and desktop." />
+  <title>Vice Harbor — Open World Sandbox</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.js", "three/addons/": "./vendor/addons/" } }
+  </script>
+</head>
+<body>
+  <div id="app" aria-hidden="true"></div>
+
+  <div id="hud" class="hidden" aria-live="polite">
+    <div class="hud-tl">
+      <div class="minimap-wrap">
+        <canvas id="minimap" width="320" height="320"></canvas>
+        <div class="minimap-ring"></div>
+        <span class="compass-n">N</span>
+      </div>
+      <div class="wanted" id="wanted" aria-label="Wanted level">
+        <span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span>
+      </div>
+      <div class="status-card">
+        <div class="meter"><div class="meter-fill" id="healthFill"></div><span class="meter-label">HEALTH</span></div>
+        <div class="cash" id="cash">$0</div>
+      </div>
+    </div>
+
+    <div class="mission-card" id="missionPanel">
+      <div class="mission-kicker"><span class="dot"></span> COURIER RUN</div>
+      <div class="mission-text" id="missionText">Reach the drop-off</div>
+      <div class="mission-meta">
+        <span id="missionDist">-- m</span>
+        <span id="missionTime">1:40</span>
+      </div>
+    </div>
+
+    <div class="speedo" id="speedo">
+      <span id="speedVal">0</span>
+      <small>KM/H</small>
+    </div>
+
+    <div class="crosshair" id="crosshair"></div>
+    <div id="toast" class="toast"></div>
+
+    <div class="desktop-hint" id="desktopHint">
+      <span><b>WASD</b> move</span><span><b>Drag</b> look</span><span><b>Shift</b> sprint</span>
+      <span><b>Space</b> jump</span><span><b>F</b> fire</span><span><b>E</b> vehicle</span>
+    </div>
+
+    <div id="joystickZone">
+      <div id="joystick"><div id="stickKnob"></div></div>
+    </div>
+
+    <div class="touch-buttons" id="touchButtons">
+      <button class="ctl small" id="btnRun" aria-label="Toggle sprint">RUN</button>
+      <button class="ctl" id="btnJump" aria-label="Jump">JUMP</button>
+      <button class="ctl" id="btnAction" aria-label="Enter or exit vehicle">ENTER</button>
+      <button class="ctl fire" id="btnFire" aria-label="Fire weapon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/></svg>
+      </button>
+    </div>
+
+    <button id="btnSound" class="sound-toggle" aria-label="Toggle sound">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg>
+    </button>
+  </div>
+
+  <div id="start" class="overlay">
+    <div class="start-vignette"></div>
+    <div class="start-content">
+      <div class="eyebrow">AN ORIGINAL OPEN-WORLD SANDBOX</div>
+      <h1>VICE<span>HARBOR</span></h1>
+      <p class="tagline">Steal a ride. Outrun the heat. Own the city.</p>
+      <button id="playBtn" class="play-btn"><span>Play</span></button>
+      <div class="control-cards">
+        <div class="control-card">
+          <div class="control-title">DESKTOP</div>
+          <p><b>WASD</b> move &amp; drive</p>
+          <p><b>Mouse drag</b> look · <b>Shift</b> sprint</p>
+          <p><b>Space</b> jump · <b>F</b> fire · <b>E</b> vehicle</p>
+        </div>
+        <div class="control-card">
+          <div class="control-title">PHONE / TABLET</div>
+          <p><b>Left stick</b> move &amp; drive</p>
+          <p><b>Drag right side</b> look around</p>
+          <p><b>Jump · Enter · Fire</b> on-screen</p>
+        </div>
+      </div>
+      <div class="start-foot">Original fan-made 3D game · No GTA assets · Installable on Android</div>
+    </div>
+  </div>
+
+  <div id="damage" class="damage"></div>
+
+  <div id="wasted" class="overlay hidden">
+    <div class="wasted-inner">
+      <div class="wasted-title">WASTED</div>
+      <div class="wasted-sub">The city always wins. Respawning...</div>
+    </div>
+  </div>
+
+  <div id="boot" class="boot"><div class="boot-bar"><i></i></div><span>BUILDING VICE HARBOR</span></div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
