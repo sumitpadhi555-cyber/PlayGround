@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PentestGPT Linux — offline Android pentest lab emulator</title>
+<meta name="description" content="An offline Android 15+ lab emulator with a Linux-style terminal, a rule-based PentestGPT coach, and three synthetic targets." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23070c10'/%3E%3Crect x='10' y='16' width='44' height='32' rx='6' fill='none' stroke='%233dffb0' stroke-width='4'/%3E%3Cpath d='M20 28l7 6-7 6' fill='none' stroke='%233dffb0' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M34 40h11' stroke='%233dffb0' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --ink: #05090b;
+    --ink-deep: #020506;
+    --panel: #0b1319;
+    --panel-raised: #101c24;
+    --border: #1b2c36;
+    --neon: #3dffb0;
+    --cyan: #4fe3ff;
+    --amber: #ffcf5c;
+    --text: #e7f2ef;
+    --muted: #8aa0a8;
+    --faint: #5c737d;
+    --mono: "SFMono-Regular", "JetBrains Mono", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+    --sans: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  html, body { max-width: 100%; overflow-x: hidden; }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  img { max-width: 100%; height: auto; }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(61, 255, 176, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(61, 255, 176, 0.035) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mask-image: radial-gradient(circle at 50% 12%, #000 0%, transparent 78%);
+  }
+  .wrap { position: relative; width: min(1140px, calc(100% - 40px)); margin: 0 auto; }
+  header.site {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    backdrop-filter: blur(12px);
+    background: rgba(5, 9, 11, 0.82);
+    border-bottom: 1px solid var(--border);
+  }
+  .site-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark {
+    width: 40px; height: 40px; border-radius: 12px;
+    border: 1px solid rgba(61, 255, 176, 0.45);
+    background: radial-gradient(circle at 30% 20%, rgba(61, 255, 176, 0.18), transparent 70%), var(--panel);
+    display: grid; place-items: center;
+    color: var(--neon); font-family: var(--mono); font-weight: 700;
+  }
+  .brand strong { display: block; font-size: 17px; letter-spacing: 0.01em; }
+  .brand small { display: block; color: var(--muted); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid rgba(61, 255, 176, 0.3);
+    background: rgba(61, 255, 176, 0.07);
+    color: var(--neon);
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--neon); box-shadow: 0 0 10px var(--neon); }
+  main { position: relative; }
+  section { padding: 74px 0; }
+  .hero { padding-top: 68px; padding-bottom: 40px; }
+  .eyebrow {
+    color: var(--cyan); font-family: var(--mono); font-size: 12px;
+    letter-spacing: 0.22em; text-transform: uppercase; margin: 0 0 16px;
+  }
+  h1 {
+    font-size: clamp(34px, 6vw, 62px);
+    line-height: 1.03;
+    letter-spacing: -0.02em;
+    margin: 0 0 20px;
+    max-width: 15ch;
+  }
+  h1 em { font-style: normal; color: var(--neon); }
+  .lede { color: var(--muted); font-size: clamp(16px, 2vw, 19px); max-width: 60ch; margin: 0 0 28px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    border-radius: 12px; padding: 13px 20px;
+    font-weight: 600; text-decoration: none; font-size: 14px;
+    border: 1px solid transparent; transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: var(--neon); color: #04120c; }
+  .btn-ghost { border-color: var(--border); color: var(--text); background: var(--panel); }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center; }
+  .device {
+    position: relative; width: 100%; border-radius: 30px; padding: 12px;
+    background: linear-gradient(160deg, #12212a, #060b0e 70%);
+    border: 1px solid var(--border);
+    box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
+  }
+  .device img { display: block; width: 100%; border-radius: 20px; }
+  .device::after {
+    content: ""; position: absolute; inset: 6px; border-radius: 24px;
+    border: 1px solid rgba(61, 255, 176, 0.14); pointer-events: none;
+  }
+  .stats { display: flex; flex-wrap: wrap; gap: 26px; margin-top: 34px; }
+  .stat strong { display: block; font-size: 22px; color: var(--neon); font-family: var(--mono); }
+  .stat span { color: var(--muted); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .section-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 34px; flex-wrap: wrap; }
+  h2 { font-size: clamp(25px, 3.4vw, 36px); margin: 0; letter-spacing: -0.01em; }
+  .section-head p { color: var(--muted); margin: 0; max-width: 46ch; }
+  .features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .card .k { font-family: var(--mono); color: var(--cyan); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; }
+  .card h3 { margin: 10px 0 8px; font-size: 17px; }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .labs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .lab { display: flex; flex-direction: column; gap: 14px; }
+  .lab-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .lab-name { font-family: var(--mono); font-weight: 700; font-size: 18px; }
+  .lab-ip { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+  .tag { border-radius: 999px; padding: 5px 11px; font-size: 11px; font-family: var(--mono); letter-spacing: 0.1em; border: 1px solid; }
+  .tag.easy { color: var(--neon); border-color: rgba(61, 255, 176, 0.4); background: rgba(61, 255, 176, 0.08); }
+  .tag.medium { color: var(--amber); border-color: rgba(255, 207, 92, 0.4); background: rgba(255, 207, 92, 0.08); }
+  .tag.hard { color: #ff8e72; border-color: rgba(255, 142, 114, 0.4); background: rgba(255, 142, 114, 0.08); }
+  .shots { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .shot { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 14px; }
+  .shot img { width: 100%; border-radius: 14px; display: block; }
+  .shot figcaption { color: var(--muted); font-family: var(--mono); font-size: 12px; margin-top: 12px; }
+  figure { margin: 0; }
+  .build {
+    background: var(--ink-deep);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    align-items: center;
+  }
+  pre {
+    margin: 0; background: #03080a; border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px; overflow-x: auto; color: var(--neon); font-family: var(--mono); font-size: 13px; line-height: 1.7;
+  }
+  pre .c { color: var(--faint); }
+  .safety {
+    margin-top: 16px; border: 1px dashed rgba(255, 207, 92, 0.4); border-radius: 14px;
+    padding: 16px 18px; color: var(--muted); font-size: 14px;
+  }
+  .safety b { color: var(--amber); }
+  footer { border-top: 1px solid var(--border); padding: 30px 0 44px; color: var(--faint); font-size: 13px; }
+  .footer-inner { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; align-items: center; }
+  .footer-inner code { font-family: var(--mono); color: var(--muted); }
+  @media (max-width: 920px) {
+    .hero-grid, .build { grid-template-columns: 1fr; }
+    .features { grid-template-columns: repeat(2, 1fr); }
+    .labs { grid-template-columns: 1fr; }
+    .device { max-width: 430px; }
+  }
+  @media (max-width: 560px) {
+    section { padding: 52px 0; }
+    .features { grid-template-columns: 1fr; }
+    .shots { grid-template-columns: 1fr; }
+    .stats { gap: 18px; }
+    .pill { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="site">
+  <div class="wrap site-inner">
+    <div class="brand">
+      <span class="brand-mark">&gt;_</span>
+      <span>
+        <strong>PentestGPT <span style="color:var(--neon);font-size:12px;font-family:var(--mono)">LINUX</span></strong>
+        <small>Offline lab emulator · Android 15+</small>
+      </span>
+    </div>
+    <span class="pill"><span class="dot"></span> Lab only</span>
+  </div>
+</header>
+
+<main id="app-ready">
+  <section class="hero wrap">
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">Recon → Enum → Access → Flag</p>
+        <h1>A pentest lab that lives <em>entirely on your phone.</em></h1>
+        <p class="lede">
+          PentestGPT Linux is a native Android 15+ emulator with a Linux-style terminal,
+          a rule-based PentestGPT coach, and three fictional targets. No network access,
+          no real shell, no exploit payloads — just a clean path through the methodology.
+        </p>
+        <div class="cta">
+          <a class="btn btn-primary" href="#screens">See the app</a>
+          <a class="btn btn-ghost" href="#build">Build the APK</a>
+        </div>
+        <div class="stats">
+          <div class="stat"><strong>0</strong><span>INTERNET permission</span></div>
+          <div class="stat"><strong>3</strong><span>synthetic labs</span></div>
+          <div class="stat"><strong>100%</strong><span>offline coach</span></div>
+        </div>
+      </div>
+      <div class="device">
+        <img src="assets/terminal.png" alt="PentestGPT Linux terminal tab showing a completed NEBULA lab" />
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="screens">
+    <div class="section-head">
+      <h2>Built like a real engagement</h2>
+      <p>A terminal, a coach, and an intel board stay in sync as you work through each target.</p>
+    </div>
+    <div class="features">
+      <div class="card"><div class="k">Terminal</div><h3>Linux-style shell</h3><p>Nmap, gobuster, curl, ftp, hydra, ssh, cat and more — all simulated in-app.</p></div>
+      <div class="card"><div class="k">PentestGPT</div><h3>Rule-based coach</h3><p>Phase-aware hints with runnable commands. No cloud, no API key, no network.</p></div>
+      <div class="card"><div class="k">Intel</div><h3>Evidence board</h3><p>Services, web paths, credentials, flags and progress tracked as you go.</p></div>
+      <div class="card"><div class="k">Report</div><h3>Export findings</h3><p>Generate a markdown engagement report and copy or share it from the device.</p></div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="section-head">
+      <h2>Three targets. One methodology.</h2>
+      <p>Each lab follows the same loop but changes the service, the weakness, and the path to the flag.</p>
+    </div>
+    <div class="labs">
+      <div class="card lab">
+        <div class="lab-top"><span class="lab-name">NEBULA</span><span class="tag easy">EASY</span></div>
+        <div class="lab-ip">10.10.14.7 · Ubuntu 22.04</div>
+        <p>Enumerate a noisy web stack, recover operator credentials, and read the staging flag.</p>
+      </div>
+      <div class="card lab">
+        <div class="lab-top"><span class="lab-name">AURORA</span><span class="tag medium">MEDIUM</span></div>
+        <div class="lab-ip">10.10.14.23 · Debian 12</div>
+        <p>Abuse anonymous FTP exposure, pivot to SSH, and recover the database flag.</p>
+      </div>
+      <div class="card lab">
+        <div class="lab-top"><span class="lab-name">OBSIDIAN</span><span class="tag hard">HARD</span></div>
+        <div class="lab-ip">10.10.14.42 · Ubuntu 24.04</div>
+        <p>Follow a monitoring stack that leaks more than it means to and capture the audit flag.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="section-head">
+      <h2>Real screens, real flow</h2>
+      <p>Captured from the Android build running on an API 35 emulator.</p>
+    </div>
+    <div class="shots">
+      <figure class="shot">
+        <img src="assets/terminal.png" alt="Terminal tab with a completed flag capture and report ready" />
+        <figcaption>Terminal · flag captured, report ready</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="assets/intel.png" alt="Intel tab showing exposed services and engagement progress" />
+        <figcaption>Intel · services, progress, evidence</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="wrap" id="build">
+    <div class="section-head">
+      <h2>Build it locally</h2>
+      <p>Gradle wrapper, Kotlin, Jetpack Compose. Debug APK installs alongside the release build.</p>
+    </div>
+    <div class="build">
+      <div>
+        <pre><span class="c"># debug APK</span>
+./gradlew :app:assembleDebug
+
+<span class="c"># unit tests + lint</span>
+./gradlew :app:testDebugUnitTest :app:lintDebug
+
+<span class="c"># install on a device</span>
+adb install -r app/build/outputs/apk/debug/app-debug.apk</pre>
+      </div>
+      <div>
+        <p class="lede" style="font-size:16px">
+          Targets, credentials and flags are fictional. The manifest declares no
+          <code>INTERNET</code> permission, so commands can never leave the app.
+        </p>
+        <div class="safety">
+          <b>Training simulator.</b> No real shell, no exploit payload, and no capability
+          to target systems outside the app. Only assess systems you own or are
+          explicitly authorised to test.
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <span>PentestGPT Linux · v1.0.0 · Android 15+ (API 35)</span>
+    <code>offline · synthetic · no net</code>
+  </div>
+</footer>
+</body>
+</html>
