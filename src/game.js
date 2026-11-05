@@ -618,7 +618,9 @@ export class Game {
     const car = p.inCar;
     const mv = this.input.moveVector();
     const throttle = mv.y;
-    const steer = mv.x;
+    // The trailing camera faces +Z, so screen-right is world -X; invert horizontal input
+    // to keep right/left steering aligned with what the player sees.
+    const steer = -mv.x;
     const braking = throttle < -0.1 && car.speed > 1;
 
     if (throttle > 0.05) {
