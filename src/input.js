@@ -4,7 +4,8 @@ export class Input {
   constructor(canvas) {
     this.canvas = canvas;
     this.keys = new Set();
-    this.stick = { x: 0, y: 0, active: false };
+    this.touchDirections = new Set();
+    this.directionPointers = new Map();
     this.camDX = 0;
     this.camDY = 0;
     this.fireHeld = false;
@@ -17,7 +18,7 @@ export class Input {
     this.touch = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
     document.body.classList.toggle('touch', this.touch);
     this._bindKeyboard();
-    this._bindJoystick();
+    this._bindMovementButtons();
     this._bindButtons();
     this._bindCamera();
   }
@@ -34,53 +35,46 @@ export class Input {
     window.addEventListener('keyup', (e) => this.keys.delete(e.code));
     window.addEventListener('blur', () => {
       this.keys.clear();
+      this.touchDirections.clear();
+      this.directionPointers.clear();
+      document.querySelectorAll('#movePad .direction').forEach((el) => el.classList.remove('down'));
       this.fireHeld = false;
     });
   }
 
-  _bindJoystick() {
-    const base = document.getElementById('joystick');
-    const knob = document.getElementById('stickKnob');
-    if (!base) return;
-    const radius = 44;
-    let pid = null;
+  _bindMovementButtons() {
+    const directions = [
+      ['moveUp', 'up'],
+      ['moveLeft', 'left'],
+      ['moveRight', 'right'],
+      ['moveDown', 'down'],
+    ];
 
-    const update = (e) => {
-      const r = base.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-      let dx = e.clientX - cx;
-      let dy = e.clientY - cy;
-      const len = Math.hypot(dx, dy);
-      if (len > radius) { dx = (dx / len) * radius; dy = (dy / len) * radius; }
-      knob.style.transform = `translate(${dx}px, ${dy}px)`;
-      this.stick.x = dx / radius;
-      this.stick.y = -dy / radius;
-      this.stick.active = true;
-      base.classList.add('active');
-    };
+    directions.forEach(([id, direction]) => {
+      const button = document.getElementById(id);
+      if (!button) return;
+      button.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        button.setPointerCapture?.(e.pointerId);
+        this.directionPointers.set(e.pointerId, direction);
+        this.touchDirections.add(direction);
+        button.classList.add('down');
+      });
 
-    base.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      pid = e.pointerId;
-      base.setPointerCapture(pid);
-      update(e);
+      const end = (e) => {
+        if (this.directionPointers.get(e.pointerId) !== direction) return;
+        e.preventDefault();
+        this.directionPointers.delete(e.pointerId);
+        const stillHeld = [...this.directionPointers.values()].includes(direction);
+        if (!stillHeld) {
+          this.touchDirections.delete(direction);
+          button.classList.remove('down');
+        }
+      };
+      button.addEventListener('pointerup', end);
+      button.addEventListener('pointercancel', end);
     });
-    base.addEventListener('pointermove', (e) => {
-      if (pid !== e.pointerId) return;
-      e.preventDefault();
-      update(e);
-    });
-    const end = (e) => {
-      if (pid !== e.pointerId) return;
-      pid = null;
-      this.stick.x = 0; this.stick.y = 0; this.stick.active = false;
-      knob.style.transform = 'translate(0px, 0px)';
-      base.classList.remove('active');
-    };
-    base.addEventListener('pointerup', end);
-    base.addEventListener('pointercancel', end);
   }
 
   _bindButtons() {
@@ -153,20 +147,20 @@ export class Input {
   consumeAction() { const v = this.actionPressed; this.actionPressed = false; return v; }
   consumeJump() { const v = this.jumpPressed; this.jumpPressed = false; return v; }
 
-  // Combined keyboard + touch movement, in local screen space.
+  // Combined keyboard + touch-button movement, in local screen space.
   moveVector() {
-    let x = this.stick.x;
-    let y = this.stick.y;
-    if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) y += 1;
-    if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) y -= 1;
-    if (this.keys.has('KeyA') || this.keys.has('ArrowLeft')) x -= 1;
-    if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) x += 1;
+    let x = 0;
+    let y = 0;
+    if (this.keys.has('KeyW') || this.keys.has('ArrowUp') || this.touchDirections.has('up')) y += 1;
+    if (this.keys.has('KeyS') || this.keys.has('ArrowDown') || this.touchDirections.has('down')) y -= 1;
+    if (this.keys.has('KeyA') || this.keys.has('ArrowLeft') || this.touchDirections.has('left')) x -= 1;
+    if (this.keys.has('KeyD') || this.keys.has('ArrowRight') || this.touchDirections.has('right')) x += 1;
     const len = Math.hypot(x, y);
     if (len > 1) { x /= len; y /= len; }
     return { x: clamp(x, -1, 1), y: clamp(y, -1, 1), len: Math.min(1, len) };
   }
 
   isSprinting() {
-    return this.keys.has('ShiftLeft') || this.keys.has('ShiftRight') || this.runToggle || this.stick.y > 0.92;
+    return this.keys.has('ShiftLeft') || this.keys.has('ShiftRight') || this.runToggle;
   }
 }

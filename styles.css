@@ -163,27 +163,19 @@ html, body {
 .desktop-hint b { color: #dcecff; font-weight: 800; }
 
 /* Touch controls */
-#joystickZone {
-  position: absolute; left: 0; bottom: 0; width: 42%; height: 42%;
-  pointer-events: none; display: none;
+.move-pad {
+  position: absolute; left: 24px; bottom: calc(24px + var(--safe));
+  display: none; width: 168px; height: 168px; pointer-events: none;
 }
-#joystick {
-  position: absolute; left: 34px; bottom: calc(38px + var(--safe));
-  width: 132px; height: 132px; border-radius: 50%; pointer-events: auto; touch-action: none;
-  transform: translateZ(0);
-  background: radial-gradient(circle, rgba(20, 32, 50, 0.5), rgba(8, 14, 24, 0.22));
-  border: 1.5px solid rgba(150, 215, 255, 0.22);
-  box-shadow: inset 0 0 30px rgba(80, 180, 255, 0.08), 0 10px 30px rgba(0, 0, 0, 0.3);
-  transition: border-color 0.2s;
+.ctl.direction {
+  width: 52px; height: 52px; border-radius: 15px; pointer-events: auto;
+  touch-action: none; font-size: 22px; letter-spacing: 0; line-height: 1;
+  background: rgba(10, 18, 30, 0.62); border-color: rgba(155, 215, 255, 0.38);
 }
-#joystick::after { content: ""; position: absolute; inset: -34px; border-radius: 50%; }
-#joystick.active { border-color: rgba(92, 225, 255, 0.55); }
-#stickKnob {
-  position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; margin: -29px 0 0 -29px;
-  border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(160, 235, 255, 0.85), rgba(42, 120, 170, 0.6));
-  border: 1px solid rgba(200, 245, 255, 0.55);
-  box-shadow: 0 0 22px rgba(92, 225, 255, 0.35), inset 0 0 14px rgba(255, 255, 255, 0.28);
-}
+.ctl.direction.up { left: 58px; top: 0; }
+.ctl.direction.left { left: 0; top: 58px; }
+.ctl.direction.right { right: 0; top: 58px; }
+.ctl.direction.down { left: 58px; bottom: 0; }
 
 .touch-buttons { position: absolute; right: 18px; bottom: calc(24px + var(--safe)); display: none; width: 206px; height: 196px; }
 .ctl {
@@ -316,7 +308,7 @@ h1 span {
 
 /* ---------------- Responsive ---------------- */
 @media (max-width: 900px), (pointer: coarse) {
-  #joystickZone, .touch-buttons { display: block; }
+  .move-pad, .touch-buttons { display: block; }
   .desktop-hint { display: none; }
   .control-cards { display: none; }
   .start-content { max-width: 460px; }
@@ -357,6 +349,7 @@ h1 span {
   .cash { font-size: 15px; }
   .mission-card { width: min(48vw, 196px); }
   .mission-text { font-size: 11px; }
+  .move-pad { left: 14px; transform: scale(0.82); transform-origin: bottom left; }
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
@@ -371,8 +364,7 @@ h1 span {
   .status-card { width: 126px; padding: 5px 8px 6px; }
   .cash { font-size: 14px; margin-top: 3px; }
   .mission-card { width: 200px; }
-  #joystick { width: 112px; height: 112px; }
-  #stickKnob { width: 50px; height: 50px; margin: -25px 0 0 -25px; }
+  .move-pad { transform: scale(0.82); transform-origin: bottom left; }
   .touch-buttons { transform: scale(0.9); transform-origin: bottom right; }
   .speedo { bottom: calc(196px + var(--safe)); }
 }
